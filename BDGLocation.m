@@ -18,17 +18,26 @@
 -(id)init
 {
     self = [super init];
-    if(self) {
-        _locationManager = [[CLLocationManager alloc] init];
-        self.locationManager.distanceFilter = 1;
-        self.locationManager.desiredAccuracy = kCLLocationAccuracyBest;
-        self.locationManager.delegate = self;
-        self.minHorizontalAccuracy = 1000.0f;
-        
-        #if TARGET_IPHONE_SIMULATOR
-        _gpsLoc = [[CLLocation alloc] initWithLatitude:51.0405 longitude:3.77699];
-        #endif
+    if(!self) {
+        return nil;
     }
+    
+    self.locationManager = [[CLLocationManager alloc] init];
+    
+    //Request authorization in iOS8
+    if([self.locationManager respondsToSelector:@selector(requestWhenInUseAuthorization)]) {
+        [self.locationManager requestWhenInUseAuthorization];
+    }
+    
+    self.locationManager.distanceFilter = 1;
+    self.locationManager.desiredAccuracy = kCLLocationAccuracyBest;
+    self.locationManager.delegate = self;
+    self.minHorizontalAccuracy = 1000.0f;
+    
+    #if TARGET_IPHONE_SIMULATOR
+    _gpsLoc = [[CLLocation alloc] initWithLatitude:51.0405 longitude:3.77699];
+    #endif
+    
     return self;
 }
 
@@ -56,8 +65,7 @@
 -(void)locationManager:(CLLocationManager *)manager didFailWithError:(NSError *)error
 {
     NSLog(@"BGDLocation: Error updating location: %@",[error localizedDescription]);
-    switch([error code])
-    {
+    switch([error code]) {
         case kCLErrorDenied:
             //Access denied by user
             if([self.delegate respondsToSelector:@selector(locationNotAllowed)]) {
@@ -83,8 +91,13 @@
     }
 }
 
--(void)locationManager:(CLLocationManager *)manage didUpdateToLocation:(CLLocation *)newLocation fromLocation:(CLLocation *)oldLocation
+-(void)locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray *)locations
 {
+    if(!locations.count) {
+        return;
+    }
+    
+    CLLocation *newLocation = locations.lastObject;
     NSDate* newLocationeventDate = newLocation.timestamp;
     NSTimeInterval howRecentNewLocation = [newLocationeventDate timeIntervalSinceNow];
     if((howRecentNewLocation < -0.0 && howRecentNewLocation > -10.0) && (newLocation.horizontalAccuracy >= 0 && newLocation.horizontalAccuracy <= self.minHorizontalAccuracy)) {

@@ -13,6 +13,7 @@
 -(void)locationGPSOff;
 -(void)locationNotAllowed;
 -(void)locationUpdated:(CLLocation *)location;
+@optional
 -(void)locationDidChangeAuthorizationStatus:(CLAuthorizationStatus)status;
 @end
 
